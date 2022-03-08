@@ -53,6 +53,22 @@ crab submit crab_config_withoutRegCorr.py
 crab submit crab_config_ideal.py
 ```
 
+# Info about the cmparison of CMSSW & Ntupliser variables:
+
+* https://cmssdt.cern.ch/lxr/source/RecoEcal/EgammaClusterProducers/src/SCEnergyCorrectorProducer.cc
+
+Append following lines in `hlt*.py` file:
+
+```python
+process.scEnergyCorr = cms.EDProducer( "SCEnergyCorrectorProducer",
+    correctorCfg = cms.PSet(
+
+    )
+    inputSCs = cms.InputTag("superclsuters"),
+    writeFeatures = True
+)
+```
+
 # Logs of the path/command used:
 
 ```bash
