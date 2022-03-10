@@ -3233,9 +3233,26 @@ process.HLTriggerFirstPath = cms.Path( process.hltGetConditions + process.hltGet
 process.HLT_Ele32_WPTight_Gsf_v15 = cms.Path( process.HLTBeginSequence + cms.ignore(process.hltL1sSingleEGor) + process.hltPreEle32WPTightGsf + process.HLTEle5WPTightGsfSequence + process.HLTEndSequence )
 process.HLTriggerFinalPath = cms.Path( process.hltGtStage2Digis + process.hltScalersRawToDigi + process.hltFEDSelector + process.hltTriggerSummaryAOD + process.hltTriggerSummaryRAW + process.hltBoolFalse )
 
+process.scEnergyCorr = cms.EDProducer( "SCEnergyCorrectorProducer",
+    correctorCfg = cms.PSet(
+    isHLT = cms.bool(True),
+    isPhaseII = cms.bool(False),
+    applySigmaIetaIphiBug = cms.bool(True),
+    ),
+    inputSCs = cms.InputTag('particleFlowSuperClusterECAL'),
+    writeFeatures = cms.bool(True)
+)
 
-process.HLTSchedule = cms.Schedule( *(process.HLTriggerFirstPath, process.HLT_Ele32_WPTight_Gsf_v15, process.HLTriggerFinalPath ))
+process.scOutput = cms.OutputModule("PoolOutputModule",
+  fileName = cms.untracked.string('myTest.root'),
+  outputCommands = cms.untracked.vstring(
+    'drop *',
+    'keep *_*_*_SCEnergy*',
+  )
+)
 
+process.scOutputPath = cms.EndPath(process.scOutput)
+process.HLTSchedule = cms.Schedule( *(process.HLTriggerFirstPath, process.HLT_Ele32_WPTight_Gsf_v15, process.HLTriggerFinalPath, process.scOutputPath))
 
 process.source = cms.Source( "PoolSource",
     fileNames = cms.untracked.vstring(
@@ -3296,44 +3313,7 @@ process.dqmOutput = cms.OutputModule("DQMRootOutputModule",
 
 process.DQMOutput = cms.EndPath( process.dqmOutput )
 
-# process.scEnergyCorr = cms.EDProducer( "SCEnergyCorrectorProducer",
-#     correctorCfg = cms.PSet(
-#     isHLT = cms.bool(True),
-#     isPhaseII = cms.bool(False),
-#     applySigmaIetaIphiBug = cms.bool(True),
-#     ),
-#     inputSCs = cms.InputTag('particleFlowSuperClusterECAL'),
-#     writeFeatures = cms.bool(True)
-# )
 
-process.scEnergyCorr = cms.EDProducer('SCEnergyCorrectorProducer',
-  correctorCfg = cms.PSet(
-    isHLT = cms.bool(True),
-    isPhaseII = cms.bool(False),
-    applySigmaIetaIphiBug = cms.bool(False),
-    ecalRecHitsEE = cms.InputTag('ecalRecHit', 'EcalRecHitsEE'),
-    ecalRecHitsEB = cms.InputTag('ecalRecHit', 'EcalRecHitsEB'),
-    regressionKeyEB = cms.string('pfscecal_EBCorrection_offline_v2'),
-    regressionKeyEE = cms.string('pfscecal_EECorrection_offline_v2'),
-    uncertaintyKeyEB = cms.string('pfscecal_EBUncertainty_offline_v2'),
-    uncertaintyKeyEE = cms.string('pfscecal_EEUncertainty_offline_v2'),
-    regressionMinEB = cms.double(0.2),
-    regressionMaxEB = cms.double(2),
-    regressionMinEE = cms.double(0.2),
-    regressionMaxEE = cms.double(2),
-    uncertaintyMinEB = cms.double(0.0002),
-    uncertaintyMaxEB = cms.double(0.5),
-    uncertaintyMinEE = cms.double(0.0002),
-    uncertaintyMaxEE = cms.double(0.5),
-    vertexCollection = cms.InputTag('offlinePrimaryVertices'),
-    eRecHitThreshold = cms.double(1),
-    hgcalRecHits = cms.InputTag(''),
-    hgcalCylinderR = cms.double(2.7999999523162842)
-  ),
-  writeFeatures = cms.bool(True),
-  inputSCs = cms.InputTag('particleFlowSuperClusterECAL'),
-  mightGet = cms.optional.untracked.vstring
-)
 # add specific customizations
 _customInfo = {}
 _customInfo['menuType'  ]= "GRun"
