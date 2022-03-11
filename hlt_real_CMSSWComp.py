@@ -3200,11 +3200,45 @@ process.hltTriggerSummaryRAW = cms.EDProducer( "TriggerSummaryProducerRAW",
     processName = cms.string( "@" )
 )
 
+process.scEnergyCorr = cms.EDProducer( "SCEnergyCorrectorProducer",
+    correctorCfg = cms.PSet(
+    isHLT = cms.bool(True),
+    isPhaseII = cms.bool(False),
+    applySigmaIetaIphiBug = cms.bool(True),
+    ),
+    # inputSCs = cms.InputTag('particleFlowSuperClusterECAL'),
+    inputSCs = cms.InputTag('hltParticleFlowSuperClusterECALL1Seeded'),
+    writeFeatures = cms.bool(True)
+)
+
+process.scOutput = cms.OutputModule("PoolOutputModule",
+  fileName = cms.untracked.string('myTest.root'),
+  outputCommands = cms.untracked.vstring(
+    'drop *',
+    # 'keep *_*_*_SCEnergy*',
+    'keep edmTriggerResults_*_*_*',
+    'keep triggerTriggerEvent_*_*_*',
+    'keep GlobalAlgBlkBXVector_*_*_*',
+    'keep GlobalExtBlkBXVector_*_*_*',
+    'keep l1tEGammaBXVector_*_EGamma_*',
+    'keep l1tEtSumBXVector_*_EtSum_*',
+    'keep l1tJetBXVector_*_Jet_*',
+    'keep l1tMuonBXVector_*_Muon_*',
+    'keep l1tTauBXVector_*_Tau_*',
+    'keep *_scEnergyCorr_*_*',
+    # 'keep *_hltEgammaHLTExtra_*_*'
+  )
+)
+
 process.HLTL1UnpackerSequence = cms.Sequence( process.hltGtStage2Digis + process.hltGtStage2ObjectMap )
 process.HLTBeamSpot = cms.Sequence( process.hltScalersRawToDigi + process.hltOnlineBeamSpot )
 process.HLTBeginSequence = cms.Sequence( process.hltTriggerType + process.HLTL1UnpackerSequence + process.HLTBeamSpot )
 process.HLTDoFullUnpackingEgammaEcalSequence = cms.Sequence( process.hltEcalDigis + process.hltEcalPreshowerDigis + process.hltEcalUncalibRecHit + process.hltEcalDetIdToBeRecovered + process.hltEcalRecHit + process.hltEcalPreshowerRecHit )
-process.HLTPFClusteringForEgamma = cms.Sequence( process.hltRechitInRegionsECAL + process.hltRechitInRegionsES + process.hltParticleFlowRecHitECALL1Seeded + process.hltParticleFlowRecHitPSL1Seeded + process.hltParticleFlowClusterPSL1Seeded + process.hltParticleFlowClusterECALUncorrectedL1Seeded + process.hltParticleFlowClusterECALL1Seeded + process.hltParticleFlowSuperClusterECALL1Seeded )
+
+# process.HLTPFClusteringForEgamma = cms.Sequence( process.hltRechitInRegionsECAL + process.hltRechitInRegionsES + process.hltParticleFlowRecHitECALL1Seeded + process.hltParticleFlowRecHitPSL1Seeded + process.hltParticleFlowClusterPSL1Seeded + process.hltParticleFlowClusterECALUncorrectedL1Seeded + process.hltParticleFlowClusterECALL1Seeded + process.hltParticleFlowSuperClusterECALL1Seeded )
+process.HLTPFClusteringForEgamma = cms.Sequence( process.hltRechitInRegionsECAL + process.hltRechitInRegionsES + process.hltParticleFlowRecHitECALL1Seeded + process.hltParticleFlowRecHitPSL1Seeded + process.hltParticleFlowClusterPSL1Seeded + process.hltParticleFlowClusterECALUncorrectedL1Seeded + process.hltParticleFlowClusterECALL1Seeded + process.hltParticleFlowSuperClusterECALL1Seeded + process.scEnergyCorr)
+# process.HLTPFClusteringForEgamma.insert(len(process.HLTPFClusteringForEgamma.directDependencies()),process.scEnergyCorr)
+
 process.HLTDoLocalHcalSequence = cms.Sequence( process.hltHcalDigis + process.hltHbhereco + process.hltHfprereco + process.hltHfreco + process.hltHoreco )
 process.HLTFastJetForEgamma = cms.Sequence( process.hltTowerMakerForAll + process.hltFixedGridRhoFastjetAllCaloForMuons )
 process.HLTPFHcalClustering = cms.Sequence( process.hltParticleFlowRecHitHBHE + process.hltParticleFlowClusterHBHE + process.hltParticleFlowClusterHCAL )
@@ -3233,40 +3267,13 @@ process.HLTriggerFirstPath = cms.Path( process.hltGetConditions + process.hltGet
 process.HLT_Ele32_WPTight_Gsf_v15 = cms.Path( process.HLTBeginSequence + cms.ignore(process.hltL1sSingleEGor) + process.hltPreEle32WPTightGsf + process.HLTEle5WPTightGsfSequence + process.HLTEndSequence )
 process.HLTriggerFinalPath = cms.Path( process.hltGtStage2Digis + process.hltScalersRawToDigi + process.hltFEDSelector + process.hltTriggerSummaryAOD + process.hltTriggerSummaryRAW + process.hltBoolFalse )
 
-process.scEnergyCorr = cms.EDProducer( "SCEnergyCorrectorProducer",
-    correctorCfg = cms.PSet(
-    isHLT = cms.bool(True),
-    isPhaseII = cms.bool(False),
-    applySigmaIetaIphiBug = cms.bool(True),
-    ),
-    inputSCs = cms.InputTag('particleFlowSuperClusterECAL'),
-    writeFeatures = cms.bool(True)
-)
-
-process.scOutput = cms.OutputModule("PoolOutputModule",
-  fileName = cms.untracked.string('myTest.root'),
-  outputCommands = cms.untracked.vstring(
-    'drop *',
-    'keep *_*_*_SCEnergy*',
-  )
-)
-
 process.scOutputPath = cms.EndPath(process.scOutput)
 process.HLTSchedule = cms.Schedule( *(process.HLTriggerFirstPath, process.HLT_Ele32_WPTight_Gsf_v15, process.HLTriggerFinalPath, process.scOutputPath))
+# process.HLTSchedule = cms.Schedule( *(process.HLTriggerFirstPath, process.HLT_Ele32_WPTight_Gsf_v15, process.HLTriggerFinalPath))
 
 process.source = cms.Source( "PoolSource",
     fileNames = cms.untracked.vstring(
         'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/280003/4b648ca3-1107-44ba-8304-93eb3ec3a9d4.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/092c2728-1af1-4c1c-9be7-7ffc4147d0cd.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/0c09a810-d7c6-4b95-bb57-2830d24ef640.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/df823006-4540-4526-8e99-0563762ff5af.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/f6e20758-2645-48de-93b0-f1144ebf9ecf.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/73a6ca2b-aa5f-47d4-8eaa-f0e2a614027b.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/ea8c8b7d-719e-4e9b-b7df-e28989fe9ed8.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/dfe8e106-58b4-4669-a6c0-d7e14680e402.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/9fd5f050-3b8b-4c3d-83c8-7a235f473150.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270006/9b7e4e6e-be33-40bc-91fc-7e5a258986c0.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120004/32d15fc6-9041-4623-9fc2-4f7cff81b3fc.root'
     ),
     inputCommands = cms.untracked.vstring(
         'keep *'
@@ -3325,150 +3332,8 @@ _customInfo['inputFiles'][True]  = "file:RelVal_Raw_GRun_DATA.root"
 _customInfo['inputFiles'][False] = "file:RelVal_Raw_GRun_MC.root"
 _customInfo['maxEvents' ]=  500
 _customInfo['globalTag' ]= "120X_mcRun3_2021_realistic_v6"
-_customInfo['inputFile' ]=  [
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/280003/4b648ca3-1107-44ba-8304-93eb3ec3a9d4.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/092c2728-1af1-4c1c-9be7-7ffc4147d0cd.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/0c09a810-d7c6-4b95-bb57-2830d24ef640.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/df823006-4540-4526-8e99-0563762ff5af.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/f6e20758-2645-48de-93b0-f1144ebf9ecf.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/73a6ca2b-aa5f-47d4-8eaa-f0e2a614027b.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/ea8c8b7d-719e-4e9b-b7df-e28989fe9ed8.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/dfe8e106-58b4-4669-a6c0-d7e14680e402.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120002/9fd5f050-3b8b-4c3d-83c8-7a235f473150.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270006/9b7e4e6e-be33-40bc-91fc-7e5a258986c0.root',
-        'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120004/32d15fc6-9041-4623-9fc2-4f7cff81b3fc.root',
+_customInfo['inputFile' ]=  ['root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/280003/4b648ca3-1107-44ba-8304-93eb3ec3a9d4.root']
 
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/25a5d2a3-cba1-4833-b04b-240a982f59cb.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/69db704a-5b04-47d6-9618-83fb577c2de4.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/5fbc9c54-aa6e-443b-8c1b-37f491f497ac.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/ebf9f752-7980-44e7-9fcc-9413fd47278d.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/0f2cc579-e3dd-49d5-b05d-e6727a011176.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/c95b8ea3-b29c-40a7-bd58-49cd8a9459d7.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/1df7a98a-95a5-4d6e-8470-9040a6d6c626.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/079e6f24-8671-4a8d-ae47-87a844b8a77b.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/51cf2fd8-7551-4d32-ac57-6ef28cd19539.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/3ea00360-57d4-4d5c-a3e1-3b75edf3bc85.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/813e4c9a-e971-4975-a10e-7309d5455a46.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/fd26e63b-954c-4e53-8153-9d90b09c71f2.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/430a2051-afe8-4460-96d8-817b52eaef80.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/7d378371-5c07-49c8-970f-87c2dd377061.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270003/638b0102-5adf-4b83-ab74-440a0bf114a8.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/c5aa37f4-2c8d-4500-9d7c-23b8913c3031.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/04b89439-f6ba-4a9a-9c5c-ee8fb90838b5.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/343abab8-d8b7-47b4-9567-c849c112eed3.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/7903211c-fb8f-4cce-980e-91372ff23bd9.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/4a5eabfc-efb8-4ba3-b096-ac189263a2d4.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/7d75470d-d629-4449-9df3-9a768faf4cac.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/f62c827b-ca07-450c-becb-a8dce91003e6.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/befdb297-1548-4a32-a392-fa335249b995.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/3f332613-7bf2-4a56-9450-f25e6b0ad164.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/46f36dd1-c9a7-4463-aae3-31d6f797c1ff.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/134b563f-898a-4bf4-9453-f9a6f171face.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/bd66f616-809b-4c4e-8b9c-1826fcb3ef1f.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/cd6d646b-a5d7-4a61-a62d-e9bd5986d95c.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/4391f199-5b6b-46d2-b52b-6a29fd37588b.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/81d29be3-71ed-480f-a79c-d9b453e6e2db.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/9c75367d-9344-4e85-82a5-eca54d3ff0b1.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/0245468e-f593-4d0c-a658-638f80d235a0.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/f4385fa2-b8e3-40d9-a365-d9b43086d477.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/0ecef8d3-e030-4cbe-a9ce-4e7e26ffe8b0.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/12776b46-9c67-4da1-879a-0e485f1ed15a.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/945aa6d2-d56e-401d-b551-59486bd5bd4c.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/c8db17ae-3c5d-4002-95a1-120b11fdeb4b.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/436f1270-33f1-464f-9cb2-be7969ea1613.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/d1ed18b1-0dc1-440a-b20c-4c12857a64f0.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/c77fd770-9f37-4a25-b6d7-1edf2c107d7c.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/270002/622723eb-370d-4522-a1be-32def05e15e8.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/06a2ac17-207f-42ca-8ed3-b0be62e3bbc3.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/3a6fcf07-1375-423a-85e8-307123eabb64.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/070aa2d7-3118-4c36-b96b-1c7c70cec16b.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/d6151822-e495-4fd2-aede-29f976b6fa97.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/0bcbf9e6-639d-4b41-85be-bc0699309201.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/4c3e48a2-0ee4-4b5f-bc83-f561883e8a1d.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/96aeaec0-6394-4b51-803b-3465592e61b9.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/9c4fcf53-4f90-43e7-a479-95c2f5721cd5.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/cfd5da1d-c8a8-4f8b-be23-81158de4e552.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/f19af0f4-ce1e-49fe-b664-f08f3911b233.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/39596408-c0c6-48fe-ab6a-ee17ef16e83f.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/40631ab9-ea6f-45df-8d10-f2b42600b13c.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/a98323ff-25b6-448c-84bc-accfd80b0969.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/5345268c-e7b7-408c-aef9-8390dff08fc1.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/eb825194-7dcf-4fb1-8686-aa0b2d424055.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/8be7c9a2-98fb-4f09-be87-9ee355c0213e.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/88fe380f-c195-4c97-9101-eebf9c96b0ad.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/eb1f9a30-9efb-4481-950b-7502da12163a.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/637da7af-d314-4ae6-85d8-5cf078862cf2.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/a7864358-ccda-4b20-b0fc-e1edf9a384ce.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/2f848d21-278a-4a25-8271-6da3b24cc1ad.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/f3d62196-87f9-48b4-bdc0-2b7e824a3a03.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/e0435130-6611-4bd1-9517-42ce3249dda6.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/3156db6b-186a-4f99-b40a-bbd1ecabb2bc.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/297fd8f6-19eb-4905-abb9-d095b1611b27.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/130002/e3a147bf-41d2-49f3-8441-044fe0d8b2ff.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/0c49042f-b3e5-45cf-bcd6-d094c121e7fd.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/31d45fc3-0e2c-457d-acb7-caa95e8c6b27.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/b4c827ef-5b76-42de-8148-5c87c47457b5.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/7b4119b8-4886-4cf0-8ea6-a6be78d7f2ba.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/8a38cbb3-bfaa-435a-a111-b9f894c0502c.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/002b601e-7fd5-4170-96af-5bdc5e9de7f7.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/4eec9a69-cce0-476f-82ae-40233ffc28ac.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/fcc097af-99ef-4f44-9fff-8d84601f910f.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/4ef8bcfc-9dda-4821-9b24-140a41efcc1b.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/a6f6d0af-eb88-4258-9254-2f1159a3ac4c.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/1b71c5c3-6f9d-45d2-893a-2bc7dffa54b0.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/148cc077-b621-4502-a7da-e5222a84ab31.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/b6c89eda-7293-48a6-b726-bf489786918a.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/6fec1242-8580-4be9-9247-80b63929afec.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/e35d8650-8d58-45b1-baa5-f8fb74b424c7.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/74fce8aa-d86e-4d91-88ca-f311ec1ffc78.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/93302b0e-2257-4867-8600-d1913c6df93b.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/54b174d7-0cb0-4892-9188-0a0b49d993dd.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/95d31ce6-4c3e-449b-a4df-5c4c6e066966.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/5ffaed71-9003-4ac7-95f6-32ecd6a6ba86.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/9a72c1eb-3fd1-42e0-8c4f-63d0d5ecce0e.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/9b5a859d-2eca-4f34-a0c0-af1600dd99fd.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/d8dae7d1-23ad-4ba6-9560-2fbea426551a.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/8c2a630f-26a0-4c42-913d-b93d0dfe38c2.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/93a0357e-bdde-49ca-a2e5-ddeac95607c8.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/120003/457e6b1e-9d4b-4278-b5f3-148a79cfcb64.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/a04e84cc-c581-4327-8b40-8eeefd448525.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/859289be-08b5-42cc-bb4d-b8fd8b448b95.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/c5390582-34bf-4af5-9490-25c386f29d33.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/b3584029-c2c1-4b4c-a3be-b193bb6078d4.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/c7c22e9c-d3c8-415c-b0de-fb18bbb3b52b.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/ad8cfd75-ff98-49ae-a081-7ce417210ed2.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/e06b919f-ce2c-4d9d-afad-030831453484.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/6989f1da-f9a9-4a5e-b8be-002126d85b09.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/c3e016e7-dfe2-48f7-8425-f2f3c23cfdcc.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/50572845-9e38-45fe-bcfe-65833d036130.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/a75c5421-2212-4444-9c5a-b5db1869137a.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/d674b2b1-af0c-4fee-a674-b7aa95709475.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/ecc9326d-f278-4969-bc32-6ec68ad873b8.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/71a932ee-559a-4a93-8c11-d48f05528e0d.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/b0ae8f9d-d873-467c-959e-99e620952aae.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/10514dbb-d0b9-49c4-b6d5-22d4779ee405.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/27e5f37e-5a8b-4a48-9d66-40d905aa4dca.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/c1975cac-75cc-4075-8bd1-1764c19aad10.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/129a7c9e-c5bb-425d-aad3-42111688b502.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/356b535e-af7f-4ced-a32c-0377fe6d21b3.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/a987855f-9538-40f4-918a-01c46e5a9be7.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/3c565b53-3cfc-451d-a68d-948637f8cade.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/87102db5-454c-4b16-a6c3-5d9721e1a902.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/82a03f64-2586-4460-9d10-1b3a5465b55f.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/24efb018-6078-40aa-ac8c-095b982cf11c.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/140002/f95f25ab-98a3-4dfd-a827-a3b73cb6a9ff.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/a8c288b5-c511-4251-9750-f6174d885cf5.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/a2ac069a-9717-473c-af30-d296ba9358bc.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/9ff87e7f-4b16-4a3b-8259-f5ff0ad2011d.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/41bea44f-1817-4487-9643-f296da0ea73e.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/eb50decd-baa9-4453-8008-83d5b0c7853f.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/878c1759-7ba8-4978-9ac3-2e5283557e47.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/3d547b9d-ca08-46a3-ae9c-3d732bfefd7c.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/07f7408e-f413-4674-9bec-3ee87a788b39.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/3500f49a-63b6-4c9a-a7b6-139e7607c8cf.root',
-'root://cms-xrd-global.cern.ch///store/mc/Run3Winter21DRMiniAOD/DoubleElectron_Pt-1To300-gun/GEN-SIM-DIGI-RAW/FlatPU0to80FEVT_112X_mcRun3_2021_realistic_v16-v3/70000/f60a9e9f-6606-4673-8733-254cb74c0412.root'
-
-  ]
 _customInfo['realData'  ]=  False
 from HLTrigger.Configuration.customizeHLTforALL import customizeHLTforAll
 process = customizeHLTforAll(process,"GRun",_customInfo)
