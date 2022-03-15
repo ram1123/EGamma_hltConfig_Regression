@@ -22,6 +22,6 @@ config.Data.inputDataset ='/DoubleElectron_Pt-1To300-gun/Run3Winter21DRMiniAOD-F
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 10
 
-config.Data.outLFNDirBase = '/store/group/phys_egamma/Run3Studies/SCRegression/WithUpdatedCorrection'
+config.Data.outLFNDirBase = '/store/group/phys_egamma/ec/Run3Studies/SCRegression/WithUpdatedCorrection'
 config.Data.publication = False
 config.Site.storageSite = 'T2_CH_CERN'
