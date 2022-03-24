@@ -3201,26 +3201,19 @@ process.hltTriggerSummaryRAW = cms.EDProducer( "TriggerSummaryProducerRAW",
 )
 
 process.scEnergyCorrEB = cms.EDProducer( "SCEnergyCorrectorProducer",
-    correctorCfg = cms.PSet(
-    isHLT = cms.bool(True),
-    isPhaseII = cms.bool(False),
-    applySigmaIetaIphiBug = cms.bool(True),
-    ),
+    correctorCfg = process.hltParticleFlowSuperClusterECALL1Seeded.regressionConfig.clone(),
     inputSCs = cms.InputTag( 'hltParticleFlowSuperClusterECALL1Seeded:hltParticleFlowSuperClusterECALBarrel' ),
     writeFeatures = cms.bool(True)
 )
-# process.scEnergyCorrEE = cms.EDProducer( "SCEnergyCorrectorProducer",
-#     correctorCfg = cms.PSet(
-#     isHLT = cms.bool(True),
-#     isPhaseII = cms.bool(False),
-#     applySigmaIetaIphiBug = cms.bool(True),
-#     ),
-#     inputSCs = cms.InputTag('hltParticleFlowSuperClusterECALL1Seeded','hltParticleFlowSuperClusterECALEndcap'),
-#     writeFeatures = cms.bool(True)
-# )
+
+process.scEnergyCorrEE = cms.EDProducer( "SCEnergyCorrectorProducer",
+    correctorCfg = process.hltParticleFlowSuperClusterECALL1Seeded.regressionConfig.clone(),
+    inputSCs = cms.InputTag( 'hltParticleFlowSuperClusterECALL1Seeded:hltParticleFlowSuperClusterECALEndcapWithPreshower' ),
+    writeFeatures = cms.bool(True)
+)
 
 process.scOutput = cms.OutputModule("PoolOutputModule",
-  fileName = cms.untracked.string('myTest.root'),
+  fileName = cms.untracked.string('myTest_v3.root'),
   outputCommands = cms.untracked.vstring(
     'drop *',
     # 'keep *_*_*_SCEnergy*',
@@ -3233,9 +3226,9 @@ process.scOutput = cms.OutputModule("PoolOutputModule",
     'keep l1tJetBXVector_*_Jet_*',
     'keep l1tMuonBXVector_*_Muon_*',
     'keep l1tTauBXVector_*_Tau_*',
-    'keep *_scEnergyCorrEB_*_*',
+    'keep *_scEnergyCorr*_*_*',
     # 'keep *_scEnergyCorrEE_*_*',
-    # 'keep *_hltEgammaHLTExtra_*_*'
+    'keep *_hltEgammaHLTExtra_*_*'
   )
 )
 
@@ -3245,8 +3238,7 @@ process.HLTBeginSequence = cms.Sequence( process.hltTriggerType + process.HLTL1U
 process.HLTDoFullUnpackingEgammaEcalSequence = cms.Sequence( process.hltEcalDigis + process.hltEcalPreshowerDigis + process.hltEcalUncalibRecHit + process.hltEcalDetIdToBeRecovered + process.hltEcalRecHit + process.hltEcalPreshowerRecHit )
 
 # process.HLTPFClusteringForEgamma = cms.Sequence( process.hltRechitInRegionsECAL + process.hltRechitInRegionsES + process.hltParticleFlowRecHitECALL1Seeded + process.hltParticleFlowRecHitPSL1Seeded + process.hltParticleFlowClusterPSL1Seeded + process.hltParticleFlowClusterECALUncorrectedL1Seeded + process.hltParticleFlowClusterECALL1Seeded + process.hltParticleFlowSuperClusterECALL1Seeded )
-# process.HLTPFClusteringForEgamma = cms.Sequence( process.hltRechitInRegionsECAL + process.hltRechitInRegionsES + process.hltParticleFlowRecHitECALL1Seeded + process.hltParticleFlowRecHitPSL1Seeded + process.hltParticleFlowClusterPSL1Seeded + process.hltParticleFlowClusterECALUncorrectedL1Seeded + process.hltParticleFlowClusterECALL1Seeded + process.hltParticleFlowSuperClusterECALL1Seeded + process.scEnergyCorrEB + process.scEnergyCorrEE)
-process.HLTPFClusteringForEgamma = cms.Sequence( process.hltRechitInRegionsECAL + process.hltRechitInRegionsES + process.hltParticleFlowRecHitECALL1Seeded + process.hltParticleFlowRecHitPSL1Seeded + process.hltParticleFlowClusterPSL1Seeded + process.hltParticleFlowClusterECALUncorrectedL1Seeded + process.hltParticleFlowClusterECALL1Seeded + process.hltParticleFlowSuperClusterECALL1Seeded + process.scEnergyCorrEB)
+process.HLTPFClusteringForEgamma = cms.Sequence( process.hltRechitInRegionsECAL + process.hltRechitInRegionsES + process.hltParticleFlowRecHitECALL1Seeded + process.hltParticleFlowRecHitPSL1Seeded + process.hltParticleFlowClusterPSL1Seeded + process.hltParticleFlowClusterECALUncorrectedL1Seeded + process.hltParticleFlowClusterECALL1Seeded + process.hltParticleFlowSuperClusterECALL1Seeded + process.scEnergyCorrEB + process.scEnergyCorrEE)
 # process.HLTPFClusteringForEgamma.insert(len(process.HLTPFClusteringForEgamma.directDependencies()),process.scEnergyCorr)
 
 process.HLTDoLocalHcalSequence = cms.Sequence( process.hltHcalDigis + process.hltHbhereco + process.hltHfprereco + process.hltHfreco + process.hltHoreco )
@@ -3277,9 +3269,9 @@ process.HLTriggerFirstPath = cms.Path( process.hltGetConditions + process.hltGet
 process.HLT_Ele32_WPTight_Gsf_v15 = cms.Path( process.HLTBeginSequence + cms.ignore(process.hltL1sSingleEGor) + process.hltPreEle32WPTightGsf + process.HLTEle5WPTightGsfSequence + process.HLTEndSequence )
 process.HLTriggerFinalPath = cms.Path( process.hltGtStage2Digis + process.hltScalersRawToDigi + process.hltFEDSelector + process.hltTriggerSummaryAOD + process.hltTriggerSummaryRAW + process.hltBoolFalse )
 
-# process.scOutputPath = cms.EndPath(process.scOutput)
-# process.HLTSchedule = cms.Schedule( *(process.HLTriggerFirstPath, process.HLT_Ele32_WPTight_Gsf_v15, process.HLTriggerFinalPath, process.scOutputPath))
-process.HLTSchedule = cms.Schedule( *(process.HLTriggerFirstPath, process.HLT_Ele32_WPTight_Gsf_v15, process.HLTriggerFinalPath))
+process.scOutputPath = cms.EndPath(process.scOutput)
+process.HLTSchedule = cms.Schedule( *(process.HLTriggerFirstPath, process.HLT_Ele32_WPTight_Gsf_v15, process.HLTriggerFinalPath, process.scOutputPath))
+# process.HLTSchedule = cms.Schedule( *(process.HLTriggerFirstPath, process.HLT_Ele32_WPTight_Gsf_v15, process.HLTriggerFinalPath))
 
 process.source = cms.Source( "PoolSource",
     fileNames = cms.untracked.vstring(

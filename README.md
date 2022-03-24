@@ -72,6 +72,9 @@ process.scEnergyCorr = cms.EDProducer( "SCEnergyCorrectorProducer",
 # Logs of the path/command used:
 
 ```bash
+crab status -d crab_DoubleElectron_Pt1To300_WithNewCorr_ge1Ele/crab_crab_DoubleElectron_Pt1To300_WithNewCorr_ge1Ele
+
+
 crab kill -d crab_DoubleElectron_Pt1To300_WithNewCorr/crab_crab_DoubleElectron_Pt1To300_WithNewCorr
 crab resubmit -d crab_DoubleElectron_Pt1To300_WithNewCorr/crab_crab_DoubleElectron_Pt1To300_WithNewCorr --maxmemory=4000
 crab status -d crab_DoubleElectron_Pt1To300_WithNewCorr_v2/crab_crab_DoubleElectron_Pt1To300_WithNewCorr_v2

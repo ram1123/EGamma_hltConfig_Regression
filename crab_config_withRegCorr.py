@@ -2,8 +2,8 @@ from CRABClient.UserUtilities import config
 config = config()
 
 # config.section_('General')
-config.General.requestName = 'crab_DoubleElectron_Pt1To300_WithNewCorr_UpdatedEtaDef'
-config.General.workArea = 'crab_DoubleElectron_Pt1To300_WithNewCorr_UpdatedEtaDef'
+config.General.requestName = 'crab_DoubleElectron_Pt1To300_WithNewCorr_UpdatedEtaDef_r9'
+config.General.workArea = 'crab_DoubleElectron_Pt1To300_WithNewCorr_UpdatedEtaDef_r9'
 config.General.transferOutputs = True
 config.General.transferLogs = True
 
@@ -22,6 +22,6 @@ config.Data.inputDataset ='/DoubleElectron_Pt-1To300-gun/Run3Winter21DRMiniAOD-F
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 10
 
-config.Data.outLFNDirBase = '/store/group/phys_egamma/Run3Studies/SCRegression/WithUpdatedCorrection_UpdatedEtaDef'
+config.Data.outLFNDirBase = '/store/group/phys_egamma/Run3Studies/SCRegression/WithUpdatedCorrection_UpdatedEtaDef_r9'
 config.Data.publication = False
 config.Site.storageSite = 'T2_CH_CERN'
