@@ -1,6 +1,7 @@
 # User defined
 crab_*/
 *.root
+*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

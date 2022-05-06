@@ -1,14 +1,48 @@
 # Setup
 
+Instructions: https://twiki.cern.ch/twiki/bin/viewauth/CMS/EGMHLTRun3RecommendationForPAG
+
 ```bash
 cmsrel CMSSW_12_0_1
 cd CMSSW_12_0_1/src
 cmsenv
-git cms-addpkg HLTrigger
+git cms-addpkg HLTrigger/Configuration
+# git cms-addpkg RecoEcal/EgammaClusterAlgos # For checking the PS double addition issue
 git cms-merge-topic Sam-Harper:EGHLTCustomisation_1130pre4
 # apply patch available here: https://github.com/cms-sw/cmssw/pull/35368/files
 voms-proxy-init --voms cms --valid 168:00
+
+cd /afs/cern.ch/user/r/rasharma/work/EGamma-POG/HLT_tasks/regression/GetRawFiles_TestPSEnergy/CMSSW_12_0_1/src
+crab status -d crab_DoubleElectron_Pt1To300_WithNewCorr_HLT_PSAddComment/crab_crab_DoubleElectron_Pt1To300_WithNewCorr_HLT_PSAddComment
+
+ls /eos/cms/store/group/phys_egamma/ec/Run3Studies/SCRegression/WithUpdatedCorrection_HLT_PSAddComment
 ```
+
+# 5 April 2022
+
+voms-proxy-init --voms cms --valid 168:00
+source /cvmfs/cms.cern.ch/common/crab-setup.sh
+crab status -d crab_DoubleElectron_Pt1To300_REAL_IC_NoPS/crab_crab_DoubleElectron_Pt1To300_REAL_IC_NoPS
+crab status -d crab_DoubleElectron_Pt1To300_IDEAL_IC_NoPS/crab_crab_DoubleElectron_Pt1To300_IDEAL_IC_NoPS
+
+Will save lumi files into output directory /afs/cern.ch/work/r/rasharma/EGamma-POG/HLT_tasks/regression/GetRawFiles/CMSSW_12_0_1/src/hlt_config_files/crab_DoubleElectron_Pt1To300_IDEAL_IC_NoPS/crab_crab_DoubleElectron_Pt1To300_IDEAL_IC_NoPS/results
+Summary from jobs in status 'finished':
+  Number of files processed: 8448
+  Number of events read: 3783360
+  Number of events written in EDM files: 3783360
+  Number of events written in TFileService files: 0
+  Number of events written in other type of files: 0
+  Processed lumis written to processedLumis.json
+
+Will save lumi files into output directory /afs/cern.ch/work/r/rasharma/EGamma-POG/HLT_tasks/regression/GetRawFiles/CMSSW_12_0_1/src/hlt_config_files/crab_DoubleElectron_Pt1To300_REAL_IC_NoPS/crab_crab_DoubleElectron_Pt1To300_REAL_IC_NoPS/results
+Summary from jobs in status 'finished':
+  Number of files processed: 8448
+  Number of events read: 3783360
+  Number of events written in EDM files: 3783360
+  Number of events written in TFileService files: 0
+  Number of events written in other type of files: 0
+  Processed lumis written to processedLumis.json
+Log file is /afs/cern.ch/work/r/rasharma/EGamma-POG/HLT_tasks/regression/GetRawFiles/CMSSW_12_0_1/src/hlt_config_files/crab_DoubleElectron_Pt1To300_REAL_IC_NoPS/crab_crab_DoubleElectron_Pt1To300_REAL_IC_NoPS/crab.log
 
 #  Get hltConfig file
 
